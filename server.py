@@ -95,12 +95,15 @@ def download(sock):
         while b:
             sock.send(b)
             b = file.read(BUFFER_SIZE)
+            sock.recv(BUFFER_SIZE)
+            print("Next Bytes")
         file.close()
     except:
         print("File failed to transfer")
         return
-    if sock.recv(BUFFER_SIZE) == "FIN":
-        return
+    sock.send(b'1')
+    sock.recv(BUFFER_SIZE)
+    return
 
 def file_list(sock):
     files = os.listdir("./Server/")
@@ -109,12 +112,13 @@ def file_list(sock):
     sock.send(len(files).to_bytes(2,"big"))
     print("Recv Ready")
     sock.recv(BUFFER_SIZE)
-    print("Send file names")
+    print("Send file names", len(files))
     for file in files:
         print(file)
         sock.send(file.encode())
         sock.recv(BUFFER_SIZE)
-    if sock.recv(BUFFER_SIZE).decode()  == "CONF":
+    sock.send(b'1')
+    if sock.recv(BUFFER_SIZE).decode():
         print("Sent Files. Returning to main")
         return
     
@@ -131,13 +135,17 @@ def delfile(sock):
 
 
 server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((ADDRESS_BIND,PORT_BIND))
 
 server.listen(5)
-
-while True:
-    conn, address = server.accept()
-    new_thread = Thread(target=on_connection, args=(conn,address))
-    new_thread.start()
-server.close()
-new_thread.join()
+try: 
+    while True:
+        conn, address = server.accept()
+        new_thread = Thread(target=on_connection, args=(conn,address))
+        new_thread.start()
+    
+except KeyboardInterrupt:
+    print("Killing Server")
+    server.close()
+    new_thread.join()
