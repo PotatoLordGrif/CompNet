@@ -91,7 +91,9 @@ class StartPage(tk.Frame):
         except:
             messagebox.showerror('Connection Error', 'Error: Failed to Connect')
             return
+        print(ftp_connection.connected,ftp_connection.timedout)
         ftp_connection = FTP(addr,int(port))
+        print(ftp_connection.connected,ftp_connection.timedout)
         controller.show_frame(FileExp)  
   
 # third window frame page2
@@ -120,6 +122,7 @@ class FileExp(tk.Frame):
         downloadButton = ttk.Button(buttonFrame, text ="<- Download",command = lambda : self.download())
         downloadButton.pack()
         deleteButton = ttk.Button(buttonFrame,text="Delete Remote File",command= lambda: self.deletefile())
+        deleteButton.pack()
         listButton = ttk.Button(buttonFrame, text ="Refresh List",command = lambda : self.list_files())
         listButton.pack()
 
@@ -138,7 +141,11 @@ class FileExp(tk.Frame):
         if ftp_connection.connected == True:
             ftp_connection.checkTime()
             if ftp_connection.connected == True:
-                ftp_connection.quit()
+                try:
+                    ftp_connection.quit()
+                except:
+                    ftp_connection = FTP()
+                    self.controller.show_frame(StartPage)
         ftp_connection = FTP()
         self.controller.show_frame(StartPage)
     #List files in both local and remote directories

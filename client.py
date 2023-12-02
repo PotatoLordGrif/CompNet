@@ -43,6 +43,7 @@ class FTP():
 
     def upload(self,file_path,file_name):
         self.server.send(sys.getsizeof("UPLOAD").to_bytes(2,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send("UPLOAD".encode())
         while self.server.recv(BUFFER_SIZE).decode() != "PREP":
             print("Waiting...")
@@ -50,6 +51,7 @@ class FTP():
         try:
             file = open(file_path + file_name,"rb")
             self.server.send(sys.getsizeof(file_name).to_bytes(2,"big"))
+            self.server.recv(BUFFER_SIZE)
             self.server.send(file_name.encode())
         except:
             print("Couldn't find file...")
@@ -58,6 +60,7 @@ class FTP():
             print("Waiting...")
         try:
             self.server.send(os.path.getsize(file_path + file_name).to_bytes(4,"big"))
+
         except:
             print("Failed..")
         while self.server.recv(BUFFER_SIZE).decode() != "CONF":
@@ -78,6 +81,7 @@ class FTP():
     def download(self,file_path,file_name):
         #Initialize Download by sending Req to Server
         self.server.send(sys.getsizeof("DOWNLOAD").to_bytes(2,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send("DOWNLOAD".encode())
         new_file = open(file_path + file_name,"wb")
         #Wait for server to be ready to receive
@@ -86,6 +90,7 @@ class FTP():
         #print("Received PREP")
         #Send name of requested file
         self.server.send(sys.getsizeof(file_name).to_bytes(4,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send(file_name.encode())
         #Wait for server to send file size
         file_bytes = int.from_bytes(self.server.recv(4),"big",signed=True)
@@ -104,18 +109,23 @@ class FTP():
         return 1
         
     def list_files(self):
+        print("Sending LIST Req")
         self.server.send(sys.getsizeof("LIST").to_bytes(2,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send("LIST".encode())
         #Wait for server to be ready to receive
         file_count = int.from_bytes(self.server.recv(2),"big")
+        self.server.send(b'1')
         files = []
         while len(files) < file_count:
             files.append(self.server.recv(BUFFER_SIZE).decode())
+
         self.server.send("CONF".encode())
         return files
 
     def delfile(self,remote_file):
         self.server.send(sys.getsizeof("DELETE").to_bytes(2,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send("DELETE".encode())
         while self.server.recv(BUFFER_SIZE).decode() != "PREP":
             print("Waiting...")
@@ -128,6 +138,7 @@ class FTP():
     def quit(self):
         #print("Sending Quit Command")
         self.server.send(sys.getsizeof("QUIT").to_bytes(2,"big"))
+        self.server.recv(BUFFER_SIZE)
         self.server.send("QUIT".encode())
         if self.server.recv(BUFFER_SIZE).decode() == "CLOSE":
             self.server.close()

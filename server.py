@@ -4,7 +4,7 @@ import time
 import os
 from threading import Thread
 
-ADDRESS_BIND = "127.0.0.1"
+ADDRESS_BIND = "0.0.0.0"
 PORT_BIND = 21 # Generic FTP Port
 BUFFER_SIZE = 1024
 
@@ -20,6 +20,7 @@ def on_connection(sock,addr):
             sock.send("CONF".encode())
         while True:
             len = int.from_bytes(conn.recv(2),"big")
+            conn.send(b'1')
             msg = conn.recv(len).decode()
             if msg == "QUIT":
                 sock.send("CLOSE".encode())
@@ -46,6 +47,7 @@ def upload(sock):
     sock.send("PREP".encode())
     #Receive filename
     len = int.from_bytes(conn.recv(2),"big")
+    conn.send(b'1')
     file_name = sock.recv(len).decode()
     uploaded_file = open("./Server/" + file_name,"wb")
     #Ready to receive file content.
@@ -71,6 +73,7 @@ def download(sock):
     sock.send("PREP".encode())
     #Recv File Name
     len = int.from_bytes(conn.recv(4),"big")
+    conn.send(b'1')
     file_name = sock.recv(len).decode()
     #Open File as Read
     try:
@@ -101,7 +104,11 @@ def download(sock):
 
 def file_list(sock):
     files = os.listdir("./Server/")
+    print("Sending file count")
     sock.send(len(files).to_bytes(2,"big"))
+    print("Recv Ready")
+    sock.recv(BUFFER_SIZE)
+    print("Send file names")
     for file in files:
         sock.send(file.encode())
     if sock.recv(BUFFER_SIZE).decode()  == "CONF":
