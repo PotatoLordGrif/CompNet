@@ -1,0 +1,4 @@
+ftputil==5.0.4
+numpy==1.26.2
+thread==0.1.2
+typing_extensions==4.8.0
