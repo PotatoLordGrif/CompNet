@@ -100,13 +100,19 @@ class FTP():
             return "File Does Not Exist"
         #Tell server ready to receive bytes
         self.server.send("SEND".encode())
+        print("Sent 'SEND'")
         while recv_bytes < file_bytes:
             b = self.server.recv(BUFFER_SIZE)
             new_file.write(b)
             recv_bytes += BUFFER_SIZE
+            print("Next Bytes")
+            self.server.send(b'1')
+        self.server.recv(BUFFER_SIZE)
         new_file.close()
-        self.server.send("FIN".encode())
-        return 1
+        
+        self.server.send(b'1')
+        print("Sent Finishing statement")
+        return
         
     def list_files(self):
         print("Sending LIST Req")
@@ -115,11 +121,14 @@ class FTP():
         self.server.send("LIST".encode())
         #Wait for server to be ready to receive
         file_count = int.from_bytes(self.server.recv(2),"big")
-        self.server.send(b'1')
+        print(file_count)
         files = []
+        self.server.send(b'1')
         while len(files) < file_count:
             files.append(self.server.recv(BUFFER_SIZE).decode())
-
+            print(files)
+            self.server.send(b'1')
+        self.server.recv(BUFFER_SIZE)
         self.server.send("CONF".encode())
         return files
 

@@ -5,7 +5,7 @@ import os
 from threading import Thread
 
 ADDRESS_BIND = "0.0.0.0"
-PORT_BIND = 21 # Generic FTP Port
+PORT_BIND = 5021 # Generic FTP Port
 BUFFER_SIZE = 1024
 
 
@@ -104,13 +104,16 @@ def download(sock):
 
 def file_list(sock):
     files = os.listdir("./Server/")
+    print(files)
     print("Sending file count")
     sock.send(len(files).to_bytes(2,"big"))
     print("Recv Ready")
     sock.recv(BUFFER_SIZE)
     print("Send file names")
     for file in files:
+        print(file)
         sock.send(file.encode())
+        sock.recv(BUFFER_SIZE)
     if sock.recv(BUFFER_SIZE).decode()  == "CONF":
         print("Sent Files. Returning to main")
         return
